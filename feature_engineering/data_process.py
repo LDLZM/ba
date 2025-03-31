@@ -88,14 +88,6 @@ def set_seed(seed):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
-
-
-def MinMaxScaling(data):
-    mind, maxd = data.min(), data.max()
-    # return mind + (data - mind) / (maxd - mind)
-    return (data - mind) / (maxd - mind)
-
-
 def k_neighs(
     graph: dgl.DGLGraph,
     center_idx: int,
@@ -190,92 +182,7 @@ if __name__ == "__main__":
     set_seed(42)
 
     # %%
-    """
-        For Yelpchi dataset
-        Code partially from https://github.com/YingtongDou/CARE-GNN
-    """
-    print(f"processing YELP data...")
-    yelp = loadmat(os.path.join(DATADIR, 'YelpChi.mat'))
-    net_rur = yelp['net_rur']
-    net_rtr = yelp['net_rtr']
-    net_rsr = yelp['net_rsr']
-    yelp_homo = yelp['homo']
 
-    sparse_to_adjlist(net_rur, os.path.join(
-        DATADIR, "yelp_rur_adjlists.pickle"))
-    sparse_to_adjlist(net_rtr, os.path.join(
-        DATADIR, "yelp_rtr_adjlists.pickle"))
-    sparse_to_adjlist(net_rsr, os.path.join(
-        DATADIR, "yelp_rsr_adjlists.pickle"))
-    sparse_to_adjlist(yelp_homo, os.path.join(
-        DATADIR, "yelp_homo_adjlists.pickle"))
-
-    data_file = yelp
-    labels = pd.DataFrame(data_file['label'].flatten())[0]
-    feat_data = pd.DataFrame(data_file['features'].todense().A)
-    # load the preprocessed adj_lists
-    with open(os.path.join(DATADIR, "yelp_homo_adjlists.pickle"), 'rb') as file:
-        homo = pickle.load(file)
-    file.close()
-    src = []
-    tgt = []
-    for i in homo:
-        for j in homo[i]:
-            src.append(i)
-            tgt.append(j)
-    src = np.array(src)
-    tgt = np.array(tgt)
-    g = dgl.graph((src, tgt))
-    g.ndata['label'] = torch.from_numpy(labels.to_numpy()).to(torch.long)
-    g.ndata['feat'] = torch.from_numpy(
-        feat_data.to_numpy()).to(torch.float32)
-    dgl.data.utils.save_graphs(DATADIR + "graph-yelp.bin", [g])
-
-    # %%
-    """
-        For Amazon dataset
-    """
-    print(f"processing AMAZON data...")
-    amz = loadmat(os.path.join(DATADIR, 'Amazon.mat'))
-    net_upu = amz['net_upu']
-    net_usu = amz['net_usu']
-    net_uvu = amz['net_uvu']
-    amz_homo = amz['homo']
-
-    sparse_to_adjlist(net_upu, os.path.join(
-        DATADIR, "amz_upu_adjlists.pickle"))
-    sparse_to_adjlist(net_usu, os.path.join(
-        DATADIR, "amz_usu_adjlists.pickle"))
-    sparse_to_adjlist(net_uvu, os.path.join(
-        DATADIR, "amz_uvu_adjlists.pickle"))
-    sparse_to_adjlist(amz_homo, os.path.join(
-        DATADIR, "amz_homo_adjlists.pickle"))
-
-    data_file = amz
-    labels = pd.DataFrame(data_file['label'].flatten())[0]
-    feat_data = pd.DataFrame(data_file['features'].todense().A)
-    # load the preprocessed adj_lists
-    with open(DATADIR + 'amz_homo_adjlists.pickle', 'rb') as file:
-        homo = pickle.load(file)
-    file.close()
-    src = []
-    tgt = []
-    for i in homo:
-        for j in homo[i]:
-            src.append(i)
-            tgt.append(j)
-    src = np.array(src)
-    tgt = np.array(tgt)
-    g = dgl.graph((src, tgt))
-    g.ndata['label'] = torch.from_numpy(labels.to_numpy()).to(torch.long)
-    g.ndata['feat'] = torch.from_numpy(
-        feat_data.to_numpy()).to(torch.float32)
-    dgl.data.utils.save_graphs(DATADIR + "graph-amazon.bin", [g])
-
-    # # %%
-    # """
-    #     For S-FFSD dataset
-    # """
     print(f"processing S-FFSD data...")
     data = pd.read_csv(os.path.join(DATADIR, 'S-FFSD.csv'))
     data = featmap_gen(data.reset_index(drop=True))
@@ -317,7 +224,7 @@ if __name__ == "__main__":
     dgl.data.utils.save_graphs(DATADIR + "graph-S-FFSD.bin", [g])
 
     # generate neighbor riskstat features
-    for file_name in ['S-FFSD', 'yelp', 'amazon']:
+    for file_name in ['S-FFSD']:
         print(
             f"Generating neighbor risk-aware features for {file_name} dataset...")
         graph = dgl.load_graphs(DATADIR + "graph-" + file_name + ".bin")[0][0]

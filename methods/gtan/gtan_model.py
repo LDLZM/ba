@@ -360,7 +360,17 @@ class GraphAttnModel(nn.Module):
             h = features
         else:
             h = self.n2v_mlp(n2v_feat)
+            print("!!!!!!!!!!!!!!!!!EEEEEEEEEEE")
+            print(h)
+            print(h.size())
+            print("@@@@@@@@@@@@@@@@@@@@@@")
+            print(features)
+            print(features.size())
+
             h = features + h
+            print("!!!!!!!!!!!!!!!!!QQQQQQQQQQQ")
+            print(h)
+            print(h.size())
 
         label_embed = self.input_drop(self.layers[0](labels))
         label_embed = self.layers[1](h) + self.layers[2](label_embed)

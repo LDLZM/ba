@@ -74,6 +74,8 @@ def gtan_main(feat_df, graph, train_idx, test_idx, labels, args, cat_features):
                                         drop_last=False, # 是否丢弃最后一批
                                         num_workers=0 # 工作线程数
                                         )
+        
+        
         # TODO
         model = GraphAttnModel(in_feats=feat_df.shape[1],
                                # 为什么要整除4？
@@ -331,6 +333,13 @@ def load_gtan_data(dataset: str, test_size: float):
         out = []
         alls = []
         allt = []
+
+
+
+
+
+
+
         pair = ["Source", "Target", "Location", "Type"]
         for column in pair:
             src, tgt = [], []
@@ -371,9 +380,5 @@ def load_gtan_data(dataset: str, test_size: float):
 
         train_idx, test_idx, y_train, y_test = train_test_split(index, labels, stratify=labels, test_size=test_size/2,
                                                                 random_state=2, shuffle=True)
-
-
-
-
 
     return feat_data, labels, train_idx, test_idx, g, cat_features
