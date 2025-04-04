@@ -63,49 +63,30 @@ class TransEmbedding(nn.Module):
                 :param cat_feature: category features
         """
         super(TransEmbedding, self).__init__()
-        self.time_pe = PosEncoding(dim=in_feats, device=device, base=100)
-        #time_emb = time_pe(torch.sin(torch.tensor(df['time_span'].values)/86400*torch.pi))
-        self.cat_table = nn.ModuleDict({col: nn.Embedding(max(df[col].unique(
-        ))+1, in_feats).to(device) for col in cat_features if col not in {"Labels", "Time"}})
+        self.cat_table = nn.ModuleDict({col: nn.Embedding(max(df[col].unique())+1, in_feats).to(device) for col in cat_features})
         self.label_table = nn.Embedding(3, in_feats, padding_idx=2).to(device)
         self.time_emb = None
         self.emb_dict = None
         self.label_emb = None
         self.cat_features = cat_features
-
-
-
         self.forward_mlp = nn.ModuleList(
             [nn.Linear(in_feats, in_feats) for i in range(len(cat_features))])
-        
-
-
         self.dropout = nn.Dropout(dropout)
-
     def forward_emb(self, df):
         if self.emb_dict is None:
             self.emb_dict = self.cat_table
-        # print(self.emb_dict)
-        # print(df['trans_md'])
         support = {col: self.emb_dict[col](
-            df[col]) for col in self.cat_features if col not in {"Labels", "Time"}}
-        #self.time_emb = self.time_pe(torch.sin(torch.tensor(df['time_span'])/86400*torch.pi))
-        #support['time_span'] = self.time_emb
-        #support['labels'] = self.label_table(df['labels'])
+            df[col]) for col in self.cat_features}
         return support
-
     def forward(self, df):
         support = self.forward_emb(df)
         output = 0
         for i, k in enumerate(support.keys()):
-            # if k =='time_span':
-            #    print(df[k].shape)
             support[k] = self.dropout(support[k])
             support[k] = self.forward_mlp[i](support[k])
             output = output + support[k]
         return output
-
-
+    
 class TransformerConv(nn.Module):
 
     def __init__(self,
@@ -135,10 +116,8 @@ class TransformerConv(nn.Module):
         """
 
         super(TransformerConv, self).__init__()
+
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
-        print('in_src_feats')
-        print('in_dst_feats')
-        print(self._in_src_feats, self._in_dst_feats)
         self._out_feats = out_feats
         self._allow_zero_in_degree = allow_zero_in_degree
         self._num_heads = num_heads
@@ -175,6 +154,9 @@ class TransformerConv(nn.Module):
             :param feat: input feat
             :param get_attention: whether to get attention
         """
+        import sys
+        print(feat)
+        print(feat.shape)
 
         graph = graph.local_var()
 
@@ -207,6 +189,7 @@ class TransformerConv(nn.Module):
         # Assign features to nodes
         graph.srcdata.update({'ft': q_src, 'ft_v': v_src})
         graph.dstdata.update({'ft': k_dst})
+        
         # Step 1. dot product
         graph.apply_edges(fn.u_dot_v('ft', 'ft', 'a'))
 
@@ -289,20 +272,12 @@ class GraphAttnModel(nn.Module):
         self.n_classes = n_classes
         self.heads = heads
         self.activation = activation
-        #self.input_drop = lambda x: x
         self.input_drop = nn.Dropout(drop[0])
         self.drop = drop[1]
         self.output_drop = nn.Dropout(self.drop)
-        # self.pn = PairNorm(mode=pairnorm)
-
-
-
         if n2v_feat:
             self.n2v_mlp = TransEmbedding(
                 ref_df, device=device, in_feats=in_feats, cat_features=cat_features)
-            
-
-        
         else:
             self.n2v_mlp = lambda x: x
         self.layers = nn.ModuleList()
@@ -360,18 +335,7 @@ class GraphAttnModel(nn.Module):
             h = features
         else:
             h = self.n2v_mlp(n2v_feat)
-            print("!!!!!!!!!!!!!!!!!EEEEEEEEEEE")
-            print(h)
-            print(h.size())
-            print("@@@@@@@@@@@@@@@@@@@@@@")
-            print(features)
-            print(features.size())
-
             h = features + h
-            print("!!!!!!!!!!!!!!!!!QQQQQQQQQQQ")
-            print(h)
-            print(h.size())
-
         label_embed = self.input_drop(self.layers[0](labels))
         label_embed = self.layers[1](h) + self.layers[2](label_embed)
         label_embed = self.layers[3](label_embed)
@@ -382,4 +346,6 @@ class GraphAttnModel(nn.Module):
 
         logits = self.layers[-1](h)
 
+        print(logits)
+        print(logits.shape)
         return logits

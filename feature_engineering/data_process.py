@@ -42,21 +42,14 @@ def featmap_gen(tmp_df=None):
             lowbound = (time_list >= temp_time - length)
             upbound = (time_list <= temp_time)
             correct_data = tmp_df[lowbound & upbound]
-            new_df['trans_at_avg_{}'.format(
-                tname)] = correct_data['Amount'].mean()
-            new_df['trans_at_totl_{}'.format(
-                tname)] = correct_data['Amount'].sum()
-            new_df['trans_at_std_{}'.format(
-                tname)] = correct_data['Amount'].std()
-            new_df['trans_at_bias_{}'.format(
-                tname)] = temp_amt - correct_data['Amount'].mean()
+            new_df['trans_at_avg_{}'.format(tname)] = correct_data['Amount'].mean()
+            new_df['trans_at_totl_{}'.format(tname)] = correct_data['Amount'].sum()
+            new_df['trans_at_std_{}'.format(tname)] = correct_data['Amount'].std()
+            new_df['trans_at_bias_{}'.format(tname)] = temp_amt - correct_data['Amount'].mean()
             new_df['trans_at_num_{}'.format(tname)] = len(correct_data)
-            new_df['trans_target_num_{}'.format(tname)] = len(
-                correct_data.Target.unique())
-            new_df['trans_location_num_{}'.format(tname)] = len(
-                correct_data.Location.unique())
-            new_df['trans_type_num_{}'.format(tname)] = len(
-                correct_data.Type.unique())
+            new_df['trans_target_num_{}'.format(tname)] = len(correct_data.Target.unique())
+            new_df['trans_location_num_{}'.format(tname)] = len(correct_data.Location.unique())
+            new_df['trans_type_num_{}'.format(tname)] = len(correct_data.Type.unique())
         post_fe.append(new_df)
     return pd.DataFrame(post_fe)
 

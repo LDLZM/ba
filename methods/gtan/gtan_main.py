@@ -31,6 +31,8 @@ def gtan_main(feat_df, graph, train_idx, test_idx, labels, args, cat_features):
         np.zeros([len(feat_df), 2])).float().to(device)
 
 
+
+
     kfold = StratifiedKFold(
         n_splits=args['n_fold'], shuffle=True, random_state=args['seed'])
 
